@@ -1,8 +1,8 @@
 use rmcp::model::{CallToolRequestParam, CallToolResult};
 use serde_json::{Map, Value};
 use tauri::{AppHandle, Emitter, Runtime, State};
-use tokio::time::timeout;
 use tokio::sync::oneshot;
+use tokio::time::timeout;
 
 use super::{
     constants::{DEFAULT_MCP_CONFIG, MCP_TOOL_CALL_TIMEOUT},
@@ -200,31 +200,63 @@ pub async fn call_tool(
 ) -> Result<CallToolResult, String> {
     // Set up cancellation if token is provided
     let (cancel_tx, cancel_rx) = oneshot::channel::<()>();
-    
+
     if let Some(token) = &cancellation_token {
         let mut cancellations = state.tool_call_cancellations.lock().await;
         cancellations.insert(token.clone(), cancel_tx);
+        log::debug!(
+            "Registered cancellation token '{}' for tool '{}'",
+            token,
+            tool_name
+        );
     }
 
     let servers = state.mcp_servers.lock().await;
 
     // Iterate through servers and find the first one that contains the tool
-    for (_, service) in servers.iter() {
+    for (server_name, service) in servers.iter() {
+        log::trace!(
+            "Checking MCP server '{}' for tool '{}'",
+            server_name,
+            tool_name
+        );
+
         let tools = match service.list_all_tools().await {
             Ok(tools) => tools,
-            Err(_) => continue, // Skip this server if we can't list tools
+            Err(err) => {
+                log::warn!("Failed to list tools for server '{}': {}", server_name, err);
+                continue; // Skip this server if we can't list tools
+            }
         };
+
+        let available_tools: Vec<String> = tools.iter().map(|t| t.name.to_string()).collect();
+        log::trace!(
+            "Server '{}' exposes tools: {:?}",
+            server_name,
+            available_tools
+        );
 
         if !tools.iter().any(|t| t.name == tool_name) {
             continue; // Tool not found in this server, try next
         }
 
-        println!("Found tool {} in server", tool_name);
+        log::debug!(
+            "Dispatching tool '{}' on MCP server '{}'",
+            tool_name,
+            server_name
+        );
 
         // Call the tool with timeout and cancellation support
+        let request_arguments = arguments.clone();
+        if let Some(args) = request_arguments.as_ref() {
+            log::trace!("Tool '{}' invocation arguments: {:?}", tool_name, args);
+        } else {
+            log::trace!("Tool '{}' invoked without arguments", tool_name);
+        }
+
         let tool_call = service.call_tool(CallToolRequestParam {
             name: tool_name.clone().into(),
-            arguments,
+            arguments: request_arguments,
         });
 
         // Race between timeout, tool call, and cancellation
@@ -232,24 +264,43 @@ pub async fn call_tool(
             tokio::select! {
                 result = timeout(MCP_TOOL_CALL_TIMEOUT, tool_call) => {
                     match result {
-                        Ok(call_result) => call_result.map_err(|e| e.to_string()),
+                        Ok(call_result) => call_result.map_err(|e| {
+                            format!(
+                                "Tool call '{}' on server '{}' failed: {}",
+                                tool_name,
+                                server_name,
+                                e
+                            )
+                        }),
                         Err(_) => Err(format!(
-                            "Tool call '{}' timed out after {} seconds",
+                            "Tool call '{}' on server '{}' timed out after {} seconds",
                             tool_name,
+                            server_name,
                             MCP_TOOL_CALL_TIMEOUT.as_secs()
                         )),
                     }
                 }
                 _ = cancel_rx => {
+                    log::warn!(
+                        "Tool '{}' on server '{}' was cancelled via token",
+                        tool_name,
+                        server_name
+                    );
                     Err(format!("Tool call '{}' was cancelled", tool_name))
                 }
             }
         } else {
             match timeout(MCP_TOOL_CALL_TIMEOUT, tool_call).await {
-                Ok(call_result) => call_result.map_err(|e| e.to_string()),
+                Ok(call_result) => call_result.map_err(|e| {
+                    format!(
+                        "Tool call '{}' on server '{}' failed: {}",
+                        tool_name, server_name, e
+                    )
+                }),
                 Err(_) => Err(format!(
-                    "Tool call '{}' timed out after {} seconds",
+                    "Tool call '{}' on server '{}' timed out after {} seconds",
                     tool_name,
+                    server_name,
                     MCP_TOOL_CALL_TIMEOUT.as_secs()
                 )),
             }
@@ -259,11 +310,31 @@ pub async fn call_tool(
         if let Some(token) = &cancellation_token {
             let mut cancellations = state.tool_call_cancellations.lock().await;
             cancellations.remove(token);
+            log::trace!(
+                "Removed cancellation token '{}' for tool '{}'",
+                token,
+                tool_name
+            );
+        }
+
+        match &result {
+            Ok(success) => {
+                log::trace!(
+                    "Tool '{}' on server '{}' completed with response: {:?}",
+                    tool_name,
+                    server_name,
+                    success
+                );
+            }
+            Err(err) => {
+                log::error!("{err}");
+            }
         }
 
         return result;
     }
 
+    log::error!("Tool '{}' not found on any connected MCP server", tool_name);
     Err(format!("Tool {} not found", tool_name))
 }
 
@@ -281,14 +352,21 @@ pub async fn cancel_tool_call(
     cancellation_token: String,
 ) -> Result<(), String> {
     let mut cancellations = state.tool_call_cancellations.lock().await;
-    
+
     if let Some(cancel_tx) = cancellations.remove(&cancellation_token) {
         // Send cancellation signal - ignore if receiver is already dropped
         let _ = cancel_tx.send(());
-        println!("Tool call with token {} cancelled", cancellation_token);
+        log::info!("Cancellation requested for token '{}'", cancellation_token);
         Ok(())
     } else {
-        Err(format!("Cancellation token {} not found", cancellation_token))
+        log::warn!(
+            "Cancellation token '{}' not found when attempting to cancel tool call",
+            cancellation_token
+        );
+        Err(format!(
+            "Cancellation token {} not found",
+            cancellation_token
+        ))
     }
 }
 

@@ -7,9 +7,10 @@ use core::{
     state::AppState,
 };
 use jan_utils::generate_app_token;
-use std::{collections::HashMap, sync::Arc};
-use tauri_plugin_deep_link::DeepLinkExt;
+use log::LevelFilter;
+use std::{collections::HashMap, env, sync::Arc};
 use tauri::{Emitter, Manager, RunEvent};
+use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_llamacpp::cleanup_llama_processes;
 use tokio::sync::Mutex;
 
@@ -17,6 +18,7 @@ use crate::core::setup::setup_tray;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let (log_level, log_level_source) = resolve_log_level_from_args();
     let mut builder = tauri::Builder::default();
     #[cfg(desktop)]
     {
@@ -135,10 +137,10 @@ pub fn run() {
             }
             _ => {}
         })
-        .setup(|app| {
+        .setup(move |app| {
             app.handle().plugin(
                 tauri_plugin_log::Builder::default()
-                    .level(log::LevelFilter::Debug)
+                    .level(log_level)
                     .targets([
                         tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Stdout),
                         tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Webview),
@@ -149,6 +151,14 @@ pub fn run() {
                     ])
                     .build(),
             )?;
+            match log_level_source {
+                Some(source) => {
+                    log::info!("Initialized logging at level {:?} via {source}", log_level);
+                }
+                None => {
+                    log::info!("Initialized logging at default level {:?}", log_level);
+                }
+            }
             app.handle()
                 .plugin(tauri_plugin_updater::Builder::new().build())?;
             // Install extensions
@@ -192,4 +202,58 @@ pub fn run() {
         }
         _ => {}
     });
+}
+
+fn resolve_log_level_from_args() -> (LevelFilter, Option<String>) {
+    let mut args = env::args().skip(1).peekable();
+    while let Some(arg) = args.next() {
+        if let Some(value) = arg.strip_prefix("--log-level=") {
+            return match parse_log_level(value) {
+                Ok(level) => (level, Some("--log-level".to_string())),
+                Err(err) => {
+                    eprintln!("{err}");
+                    (
+                        LevelFilter::Debug,
+                        Some("--log-level (invalid value)".to_string()),
+                    )
+                }
+            };
+        }
+
+        if arg == "--log-level" {
+            if let Some(value) = args.next() {
+                return match parse_log_level(&value) {
+                    Ok(level) => (level, Some("--log-level".to_string())),
+                    Err(err) => {
+                        eprintln!("{err}");
+                        (
+                            LevelFilter::Debug,
+                            Some("--log-level (invalid value)".to_string()),
+                        )
+                    }
+                };
+            } else {
+                eprintln!(
+                    "--log-level flag requires a value (error, warn, info, debug, trace, off)"
+                );
+                return (LevelFilter::Debug, Some("--log-level".to_string()));
+            }
+        }
+    }
+
+    (LevelFilter::Debug, None)
+}
+
+fn parse_log_level(value: &str) -> Result<LevelFilter, String> {
+    match value.to_ascii_lowercase().as_str() {
+        "error" => Ok(LevelFilter::Error),
+        "warn" | "warning" => Ok(LevelFilter::Warn),
+        "info" => Ok(LevelFilter::Info),
+        "debug" => Ok(LevelFilter::Debug),
+        "trace" => Ok(LevelFilter::Trace),
+        "off" => Ok(LevelFilter::Off),
+        other => Err(format!(
+            "Unrecognized log level '{other}'. Expected one of: error, warn, info, debug, trace, off"
+        )),
+    }
 }
