@@ -52,6 +52,7 @@ import { useToolApproval } from '@/hooks/useToolApproval'
 import DropdownModelProvider from '@/containers/DropdownModelProvider'
 import { ExtensionTypeEnum, VectorDBExtension } from '@janhq/core'
 import { ExtensionManager } from '@/lib/extension'
+import { ModelCapabilities } from '@/types/models'
 
 const CHAT_STATUS = {
   STREAMING: 'streaming',
@@ -112,6 +113,12 @@ function ThreadDetail() {
   const selectedModel = useModelProvider((state) => state.selectedModel)
   const selectedProvider = useModelProvider((state) => state.selectedProvider)
   const getProviderByName = useModelProvider((state) => state.getProviderByName)
+  const selectedProviderConfig = getProviderByName(selectedProvider)
+  const toolModeSetting = selectedProviderConfig?.settings?.find(
+    (setting) => setting.key === 'tool_mode'
+  )
+  const toolModeValue = toolModeSetting?.controller_props?.value
+  const usesCodexTools = toolModeValue === 'codex'
   const threadRef = useRef(thread)
   const projectId = threadRef.current?.metadata?.project?.id
 
@@ -284,6 +291,7 @@ function ThreadDetail() {
       })
     },
     onToolCall: ({ toolCall }) => {
+      if (usesCodexTools) return
       sessionData.tools.push(toolCall)
     },
     sendAutomaticallyWhen: followUpMessage,
@@ -319,7 +327,9 @@ function ThreadDetail() {
       const hasDocuments = hasThreadDocuments || hasProjectDocuments
       const ragFeatureAvailable = Boolean(useAttachments.getState().enabled)
       const modelSupportsTools =
-        selectedModel?.capabilities?.includes('tools') ?? false
+        !usesCodexTools &&
+        (selectedModel?.capabilities?.includes(ModelCapabilities.TOOLS) ??
+          false)
 
       updateRagToolsAvailability(
         hasDocuments,
@@ -333,6 +343,7 @@ function ThreadDetail() {
     thread?.metadata?.hasDocuments,
     thread?.metadata?.project?.id,
     selectedModel?.capabilities,
+    usesCodexTools,
     updateRagToolsAvailability,
     disabledTools, // Re-run when tools are enabled/disabled
   ])

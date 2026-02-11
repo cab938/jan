@@ -1,0 +1,45 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  memory_limiter:
+    check_interval: 5s
+    limit_mib: 400
+    spike_limit_mib: 200
+  batch:
+    send_batch_size: 512
+    timeout: 5s
+
+exporters:
+  otlp/tempo:
+    endpoint: http://127.0.0.1:4317
+    tls:
+      insecure: true
+  loki:
+    endpoint: http://127.0.0.1:3100/loki/api/v1/push
+    tls:
+      insecure: true
+    default_labels_enabled:
+      exporter: false
+      job: false
+  logging:
+    loglevel: info
+
+service:
+  telemetry:
+    logs:
+      level: debug
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp/tempo]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [loki, logging]

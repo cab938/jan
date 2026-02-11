@@ -13,6 +13,7 @@ interface SliderControlProps {
   step?: number
   id?: string
   onChange?: (value: SliderProps['defaultValue']) => void
+  disabled?: boolean
 }
 
 export function SliderControl({
@@ -23,6 +24,7 @@ export function SliderControl({
   max = 100,
   step = 1,
   onChange,
+  disabled = false,
 }: SliderControlProps) {
   const initialValue = Array.isArray(value) && value[0] !== undefined ? value : [min]
   const [currentValue, setCurrentValue] = React.useState<number[]>(initialValue)
@@ -42,6 +44,7 @@ export function SliderControl({
   }, [value])
 
   const handleValueChange = (newValue: SliderProps['defaultValue']) => {
+    if (disabled) return
     if (newValue) {
       setCurrentValue(newValue)
       setInputValue(newValue[0].toString())
@@ -51,6 +54,7 @@ export function SliderControl({
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (disabled) return
     const value = e.target.value
     setInputValue(value)
 
@@ -77,6 +81,7 @@ export function SliderControl({
               onValueChange={handleValueChange}
               className="**:[[role=slider]]:h-4 **:[[role=slider]]:w-4"
               aria-label={title}
+              disabled={disabled}
             />
             <div className="flex justify-between px-1">
               <span className="text-xs text-muted-foreground">{min}</span>
@@ -91,6 +96,7 @@ export function SliderControl({
             } transition-all duration-200 ease-in-out`}
             value={inputValue}
             onChange={handleInputChange}
+            disabled={disabled}
           />
         </div>
       </div>

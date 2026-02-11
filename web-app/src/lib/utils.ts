@@ -88,6 +88,8 @@ export function getProviderLogo(provider: string) {
       return '/images/model-provider/openai.svg'
     case 'azure':
       return '/images/model-provider/azure.svg'
+    case 'codex-app-server':
+      return '/images/model-provider/openai.svg'
     default:
       return undefined
   }
@@ -107,6 +109,8 @@ export const getProviderTitle = (provider: string) => {
       return 'OpenRouter'
     case 'gemini':
       return 'Gemini'
+    case 'codex-app-server':
+      return 'Codex App Server'
     case 'huggingface':
       return 'Hugging Face'
     default:

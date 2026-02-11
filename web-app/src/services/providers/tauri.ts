@@ -137,6 +137,15 @@ export class TauriProvidersService extends DefaultProvidersService {
     }
 
     try {
+      if (provider.provider === 'codex-app-server') {
+        try {
+          const engine = EngineManager.instance().get(provider.provider)
+          await engine?.list()
+        } catch (error) {
+          console.warn('Failed to start Codex shim before fetching models:', error)
+        }
+      }
+
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       }

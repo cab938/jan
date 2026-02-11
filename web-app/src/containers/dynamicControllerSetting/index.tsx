@@ -29,6 +29,7 @@ type DynamicControllerProps = {
     max?: number
     step?: number
     recommended?: string
+    disabled?: boolean
   }
   onChange: (value: string | boolean | number) => void
 }
@@ -39,6 +40,8 @@ export function DynamicControllerSetting({
   controllerProps,
   onChange,
 }: DynamicControllerProps) {
+  const disabled = controllerProps.disabled === true
+
   if (controllerType === 'input') {
     return (
       <InputControl
@@ -54,6 +57,7 @@ export function DynamicControllerSetting({
         min={controllerProps.min}
         max={controllerProps.max}
         step={controllerProps.step}
+        disabled={disabled}
         onChange={(newValue) => onChange(newValue)}
       />
     )
@@ -61,6 +65,7 @@ export function DynamicControllerSetting({
     return (
       <CheckboxControl
         checked={controllerProps.value as boolean}
+        disabled={disabled}
         onChange={(newValue) => onChange(newValue)}
       />
     )
@@ -70,6 +75,7 @@ export function DynamicControllerSetting({
         value={controllerProps.value as string}
         options={controllerProps.options}
         recommended={controllerProps.recommended}
+        disabled={disabled}
         onChange={(newValue) => onChange(newValue)}
       />
     )
@@ -80,6 +86,7 @@ export function DynamicControllerSetting({
         value={(controllerProps.value as string) || ''}
         inputActions={controllerProps.input_actions}
         rows={controllerProps.rows}
+        disabled={disabled}
         onChange={(newValue) => onChange(newValue)}
       />
     )
@@ -90,6 +97,7 @@ export function DynamicControllerSetting({
         min={controllerProps.min}
         max={controllerProps.max}
         step={controllerProps.step}
+        disabled={disabled}
         onChange={(newValue) => newValue && onChange(newValue[0])}
       />
     )
@@ -99,6 +107,7 @@ export function DynamicControllerSetting({
   return (
     <CheckboxControl
       checked={!!controllerProps.value}
+      disabled={disabled}
       onChange={(newValue) => onChange(newValue)}
     />
   )

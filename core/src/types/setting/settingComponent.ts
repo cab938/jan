@@ -45,6 +45,7 @@ export type InputComponentProps = {
   type?: InputType
   textAlign?: 'left' | 'right'
   inputActions?: InputAction[]
+  disabled?: boolean
 }
 
 export type SliderComponentProps = {
@@ -52,10 +53,12 @@ export type SliderComponentProps = {
   max: number
   step: number
   value: number
+  disabled?: boolean
 }
 
 export type CheckboxComponentProps = {
   value: boolean
+  disabled?: boolean
 }
 
 export type DropdownComponentProps = {
@@ -63,4 +66,5 @@ export type DropdownComponentProps = {
   type?: InputType
   options?: DropdownOption[]
   recommended?: string
+  disabled?: boolean
 }

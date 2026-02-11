@@ -61,6 +61,12 @@ export class CustomChatTransport implements ChatTransport<UIMessage> {
     // Tools will be loaded when updateRagToolsAvailability is called with model capabilities
   }
 
+  private ensureServiceHub() {
+    if (!this.serviceHub) {
+      this.serviceHub = useServiceStore.getState().serviceHub
+    }
+  }
+
   updateSystemMessage(systemMessage: string | undefined) {
     this.systemMessage = systemMessage
   }
@@ -95,6 +101,7 @@ export class CustomChatTransport implements ChatTransport<UIMessage> {
    * @private
    */
   async refreshTools() {
+    this.ensureServiceHub()
     if (!this.serviceHub) {
       this.tools = {}
       return
@@ -186,6 +193,7 @@ export class CustomChatTransport implements ChatTransport<UIMessage> {
       messageId: string | undefined
     } & ChatRequestOptions
   ): Promise<ReadableStream<UIMessageChunk>> {
+    this.ensureServiceHub()
 
     // Ensure tools updated before sending messages
     await this.refreshTools()
@@ -204,7 +212,8 @@ export class CustomChatTransport implements ChatTransport<UIMessage> {
         // For llamacpp provider, startModel is called internally in ModelFactory.createLlamaCppModel
         this.model = await ModelFactory.createModel(
           modelId,
-          updatedProvider ?? provider
+          updatedProvider ?? provider,
+          { threadId: this.threadId }
         )
       } catch (error) {
         console.error('Failed to create model:', error)

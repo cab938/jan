@@ -112,11 +112,14 @@ export class ModelFactory {
    */
   static async createModel(
     modelId: string,
-    provider: ProviderObject
+    provider: ProviderObject,
+    context?: { threadId?: string }
   ): Promise<LanguageModel> {
     const providerName = provider.provider.toLowerCase()
 
     switch (providerName) {
+      case 'codex-app-server':
+        return this.createCodexAppServerModel(modelId, provider, context)
       case 'llamacpp':
         return this.createLlamaCppModel(modelId, provider)
 
@@ -341,5 +344,48 @@ export class ModelFactory {
     })
 
     return openAICompatible.languageModel(modelId)
+  }
+
+  /**
+   * Create a Codex App Server model using an OpenAI-compatible shim.
+   */
+  private static createCodexAppServerModel(
+    modelId: string,
+    provider: ProviderObject,
+    context?: { threadId?: string }
+  ): LanguageModel {
+    const headers: Record<string, string> = {}
+
+    if (provider.api_key) {
+      headers['Authorization'] = `Bearer ${provider.api_key}`
+    }
+
+    if (context?.threadId) {
+      headers['x-jan-thread-id'] = context.threadId
+    }
+
+    const baseUrl = provider.base_url || 'http://127.0.0.1:51327/v1'
+    const normalizedBaseUrl = baseUrl.endsWith('/v1')
+      ? baseUrl
+      : `${baseUrl}/v1`
+
+    const model = new OpenAICompatibleChatLanguageModel(modelId, {
+      provider: provider.provider,
+      headers: () => headers,
+      url: ({ path }) => {
+        const url = new URL(`${normalizedBaseUrl}${path}`)
+        return url.toString()
+      },
+      includeUsage: true,
+      fetch: fetch,
+    })
+
+    return wrapLanguageModel({
+      model,
+      middleware: extractReasoningMiddleware({
+        tagName: 'think',
+        separator: '\n',
+      }),
+    })
   }
 }

@@ -1,0 +1,31 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Attach to Rust process (CodeLLDB)",
+      "type": "lldb",
+      "request": "attach",
+      // Pick the process interactively:
+      "pid": "${command:pickProcess}",
+      // (Optional but helpful) point to the built binary
+      "program": "${workspaceFolder}/target/debug/your_app",
+      "stopOnEntry": false,
+
+      // Blackbox everything except the rmcp crate.
+      // 'skipFiles' causes breakpoints to be ignored and stepping to skip in matching sources.
+      // We skip the entire workspace and Cargo registry, then un-skip the rmcp crate.
+      "skipFiles": [
+        "${env:CARGO_HOME}/registry/src/**",
+        "${env:HOME}/.cargo/registry/src/**",
+        "!${env:CARGO_HOME}/registry/src/**/rmcp-*/**",
+        "!${env:HOME}/.cargo/registry/src/**/rmcp-*/**"
+      ],
+
+      // Extra LLDB steering to avoid non-user code while stepping.
+      "initCommands": [
+        "settings set target.process.thread.step-in-avoid-nodebug true",
+        "settings set target.process.thread.step-avoid-libraries true"
+      ]
+    }
+  ]
+}

@@ -15,20 +15,27 @@ type DropdownControlProps = {
   options?: Array<{ value: number | string; name: string }>
   recommended?: string
   onChange: (value: number | string) => void
+  disabled?: boolean
 }
 
 export function DropdownControl({
   value,
   options = [],
   onChange,
+  disabled = false,
 }: DropdownControlProps) {
   const isSelected =
     options.find((option) => option.value === value)?.name || value
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger >
-        <Button variant="outline" size="sm" className="w-full justify-between">
+      <DropdownMenuTrigger disabled={disabled}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full justify-between"
+          disabled={disabled}
+        >
           {isSelected}
           <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground ml-2" />
         </Button>
@@ -37,7 +44,10 @@ export function DropdownControl({
         {options.map((option, optionIndex) => (
           <DropdownMenuItem
             key={optionIndex}
-            onClick={() => onChange(option.value)}
+            onClick={() => {
+              if (!disabled) onChange(option.value)
+            }}
+            disabled={disabled}
             className={cn(
               'flex items-center justify-between my-1',
               isSelected === option.name

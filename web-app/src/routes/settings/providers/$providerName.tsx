@@ -35,6 +35,7 @@ import { basenameNoExt } from '@/lib/utils'
 import { useAppState } from '@/hooks/useAppState'
 import { useShallow } from 'zustand/shallow'
 import { DialogAddModel } from '@/containers/dialogs/AddModel'
+import { ModelCapabilities } from '@/types/models'
 
 // as route.threadsDetail
 export const Route = createFileRoute('/settings/providers/$providerName')({
@@ -64,6 +65,7 @@ function ProviderDetail() {
   const { providerName } = useParams({ from: Route.id })
   const { getProviderByName, setProviders, updateProvider } = useModelProvider()
   const provider = getProviderByName(providerName)
+  const isCodexAppServerProvider = providerName === 'codex-app-server'
 
   // Check if llamacpp/mlx provider needs backend configuration
   const needsBackendConfig =
@@ -465,6 +467,59 @@ function ProviderDetail() {
                                   const { fetchDevices } =
                                     useLlamacppDevices.getState()
                                   fetchDevices()
+                                }
+                              }
+
+                              if (
+                                settingKey === 'tool_mode' &&
+                                isCodexAppServerProvider
+                              ) {
+                                const isCodexTools = newValue === 'codex'
+                                const codexIndicatorIndex = newSettings.findIndex(
+                                  (s) => s.key === 'codex_tools_auto_approved'
+                                )
+                                const janIndicatorIndex = newSettings.findIndex(
+                                  (s) => s.key === 'jan_tool_execution'
+                                )
+
+                                if (codexIndicatorIndex !== -1) {
+                                  ;(
+                                    newSettings[codexIndicatorIndex]
+                                      .controller_props as { value: boolean }
+                                  ).value = isCodexTools
+                                }
+
+                                if (janIndicatorIndex !== -1) {
+                                  ;(
+                                    newSettings[janIndicatorIndex]
+                                      .controller_props as { value: boolean }
+                                  ).value = !isCodexTools
+                                }
+
+                                if (provider?.models?.length) {
+                                  const updatedModels = provider.models.map(
+                                    (model) => {
+                                      const currentCapabilities = new Set(
+                                        model.capabilities ?? []
+                                      )
+                                      if (isCodexTools) {
+                                        currentCapabilities.delete(
+                                          ModelCapabilities.TOOLS
+                                        )
+                                      } else {
+                                        currentCapabilities.add(
+                                          ModelCapabilities.TOOLS
+                                        )
+                                      }
+                                      return {
+                                        ...model,
+                                        capabilities: Array.from(
+                                          currentCapabilities
+                                        ),
+                                      }
+                                    }
+                                  )
+                                  updateObj.models = updatedModels
                                 }
                               }
 

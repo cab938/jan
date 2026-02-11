@@ -16,6 +16,7 @@ type InputControl = {
   min?: number
   max?: number
   step?: number
+  disabled?: boolean
 }
 
 export function InputControl({
@@ -28,6 +29,7 @@ export function InputControl({
   min,
   max,
   step = 1,
+  disabled = false,
 }: InputControl) {
   const [showPassword, setShowPassword] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
@@ -68,6 +70,7 @@ export function InputControl({
           placeholder={placeholder}
           onChange={(e) => onChange(e.target.value)}
           className="h-8 w-16 font-mono text-center text-xs!"
+          disabled={disabled}
         />
         <Button
           variant="outline"
@@ -76,7 +79,7 @@ export function InputControl({
           aria-label="Decrement"
           className='rounded-none'
           onClick={() => handleNumberAdjustment(-step)}
-          disabled={min !== undefined && numericValue <= min}
+          disabled={disabled || (min !== undefined && numericValue <= min)}
         >
           <IconMinus className='size-3! text-muted-foreground' />
         </Button>
@@ -87,7 +90,7 @@ export function InputControl({
           aria-label="Increment"
           className='rounded-r-md'
           onClick={() => handleNumberAdjustment(step)}
-          disabled={max !== undefined && numericValue >= max}
+          disabled={disabled || (max !== undefined && numericValue >= max)}
         >
           <IconPlus className='size-3! text-muted-foreground' />
         </Button>
@@ -111,6 +114,7 @@ export function InputControl({
           'w-full',
           hasInputActions && 'pr-16'
         )}
+        disabled={disabled}
       />
       <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
         {hasInputActions &&

@@ -1,0 +1,99 @@
+[
+  {
+    "key": "tool_mode",
+    "title": "Tool Mode",
+    "description": "Choose how tool calls are handled for Codex App Server.",
+    "controllerType": "dropdown",
+    "controllerProps": {
+      "value": "jan",
+      "options": [
+        { "value": "jan", "name": "Jan tools (default)" },
+        { "value": "codex", "name": "Codex tools (auto-approved)" }
+      ],
+      "recommended": "jan"
+    }
+  },
+  {
+    "key": "model_id",
+    "title": "Default model ID",
+    "description": "Model ID to use when a request does not specify one.",
+    "controllerType": "input",
+    "controllerProps": {
+      "value": "",
+      "placeholder": "gpt-5.2-codex",
+      "type": "text"
+    }
+  },
+  {
+    "key": "codex_tools_auto_approved",
+    "title": "Codex tools auto-approved",
+    "description": "Codex tool calls are executed without approval prompts in Jan.",
+    "controllerType": "checkbox",
+    "controllerProps": {
+      "value": false,
+      "disabled": true
+    }
+  },
+  {
+    "key": "jan_tool_execution",
+    "title": "Jan tool execution",
+    "description": "Jan executes MCP/RAG tools and shows approvals.",
+    "controllerType": "checkbox",
+    "controllerProps": {
+      "value": true,
+      "disabled": true
+    }
+  },
+  {
+    "key": "start_shim",
+    "title": "Start shim now",
+    "description": "Start the local shim immediately. The toggle will reset after starting.",
+    "controllerType": "checkbox",
+    "controllerProps": {
+      "value": false
+    }
+  },
+  {
+    "key": "auto_start",
+    "title": "Auto-start shim",
+    "description": "Automatically start the local Codex App Server shim on app launch.",
+    "controllerType": "checkbox",
+    "controllerProps": {
+      "value": false
+    }
+  },
+  {
+    "key": "shim_host",
+    "title": "Shim Host",
+    "description": "Host for the local Codex App Server shim.",
+    "controllerType": "input",
+    "controllerProps": {
+      "value": "127.0.0.1",
+      "placeholder": "127.0.0.1",
+      "type": "text"
+    }
+  },
+  {
+    "key": "shim_port",
+    "title": "Shim Port",
+    "description": "Port for the local Codex App Server shim.",
+    "controllerType": "input",
+    "controllerProps": {
+      "value": 51327,
+      "placeholder": "51327",
+      "type": "number",
+      "textAlign": "right"
+    }
+  },
+  {
+    "key": "codex_app_server_path",
+    "title": "Codex CLI path (codex)",
+    "description": "Absolute path to the Codex CLI binary used to run `codex app-server` (required in sandboxed environments).",
+    "controllerType": "input",
+    "controllerProps": {
+      "value": "",
+      "placeholder": "/path/to/codex",
+      "type": "text"
+    }
+  }
+]

@@ -93,6 +93,10 @@ pub fn run() {
         core::server::commands::start_server,
         core::server::commands::stop_server,
         core::server::commands::get_server_status,
+        // Codex App Server shim
+        core::codex_app_server::commands::start_codex_app_server_shim,
+        core::codex_app_server::commands::stop_codex_app_server_shim,
+        core::codex_app_server::commands::get_codex_app_server_shim_status,
         // MCP commands
         core::mcp::commands::get_tools,
         core::mcp::commands::call_tool,
@@ -166,6 +170,10 @@ pub fn run() {
         core::server::commands::start_server,
         core::server::commands::stop_server,
         core::server::commands::get_server_status,
+        // Codex App Server shim
+        core::codex_app_server::commands::start_codex_app_server_shim,
+        core::codex_app_server::commands::stop_codex_app_server_shim,
+        core::codex_app_server::commands::get_codex_app_server_shim_status,
         // MCP commands
         core::mcp::commands::get_tools,
         core::mcp::commands::call_tool,
@@ -201,6 +209,10 @@ pub fn run() {
             download_manager: Arc::new(Mutex::new(DownloadManagerState::default())),
             mcp_active_servers: Arc::new(Mutex::new(HashMap::new())),
             server_handle: Arc::new(Mutex::new(None)),
+            codex_shim_handle: Arc::new(Mutex::new(None)),
+            codex_shim_state: Arc::new(Mutex::new(
+                core::codex_app_server::CodexShimState::default(),
+            )),
             tool_call_cancellations: Arc::new(Mutex::new(HashMap::new())),
             mcp_settings: Arc::new(Mutex::new(McpSettings::default())),
             mcp_shutdown_in_progress: Arc::new(Mutex::new(false)),

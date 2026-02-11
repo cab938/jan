@@ -6,7 +6,7 @@ authors = ["Jan <service@jan.ai>"]
 license = "MIT"
 repository = "https://github.com/janhq/jan"
 edition = "2021"
-rust-version = "1.77.2"
+rust-version = "1.85.0"
 resolver = "2"
 
 [lib]
@@ -60,7 +60,7 @@ flate2 = "1.0"
 futures-util = "0.3.31"
 hex = "0.4"
 hmac = "0.12"
-hyper = { version = "0.14", features = ["server"] }
+hyper = { version = "0.14", features = ["server", "stream"] }
 jan-utils = { path = "./utils" }
 libloading = "0.8.7"
 log = "0.4"

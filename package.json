@@ -40,6 +40,7 @@
     "build:core": "cd core && yarn build && yarn pack",
     "build:web": "yarn workspace @janhq/web-app build",
     "build:extensions": "rimraf ./pre-install/*.tgz || true && yarn workspace @janhq/core build && cd extensions && yarn install && yarn workspaces foreach -Apt run build:publish",
+    "build:codex-extension": "cd extensions && yarn workspace @janhq/codex-app-server-extension build:publish",
     "prepare": "husky"
   },
   "devDependencies": {

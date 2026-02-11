@@ -1,0 +1,13 @@
+{
+  "terminal.integrated.inheritEnv": false,
+  "terminal.integrated.profiles.linux": {
+    "Clean Bash (no Snap)": {
+      "path": "/bin/bash",
+      "args": [
+        "-lc",
+        "${workspaceFolder}/scripts/clean-bash.sh"
+      ]
+    }
+  },
+  "terminal.integrated.defaultProfile.linux": "Clean Bash (no Snap)"
+}

@@ -1,6 +1,9 @@
 use std::{collections::HashMap, sync::Arc};
 
-use crate::core::{downloads::models::DownloadManagerState, mcp::models::McpSettings};
+use crate::core::{
+    codex_app_server::CodexShimState, downloads::models::DownloadManagerState,
+    mcp::models::McpSettings,
+};
 use rmcp::{
     model::{CallToolRequestParam, CallToolResult, InitializeRequestParam, Tool},
     service::RunningService,
@@ -25,6 +28,8 @@ pub struct AppState {
     pub download_manager: Arc<Mutex<DownloadManagerState>>,
     pub mcp_active_servers: Arc<Mutex<HashMap<String, serde_json::Value>>>,
     pub server_handle: Arc<Mutex<Option<ServerHandle>>>,
+    pub codex_shim_handle: Arc<Mutex<Option<ServerHandle>>>,
+    pub codex_shim_state: Arc<Mutex<CodexShimState>>,
     pub tool_call_cancellations: Arc<Mutex<HashMap<String, oneshot::Sender<()>>>>,
     pub mcp_settings: Arc<Mutex<McpSettings>>,
     pub mcp_shutdown_in_progress: Arc<Mutex<bool>>,

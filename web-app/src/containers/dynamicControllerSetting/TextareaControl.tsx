@@ -8,6 +8,7 @@ type TextareaControlProps = {
   onChange: (value: string) => void
   rows?: number
   inputActions?: string[]
+  disabled?: boolean
 }
 
 export function TextareaControl({
@@ -15,6 +16,7 @@ export function TextareaControl({
   value = '',
   onChange,
   rows = 4,
+  disabled = false,
 }: TextareaControlProps) {
   const { spellCheckChatInput } = useGeneralSetting()
 
@@ -25,6 +27,7 @@ export function TextareaControl({
       onChange={(e) => onChange(e.target.value)}
       rows={rows}
       className={cn('w-full resize-none')}
+      disabled={disabled}
       spellCheck={spellCheckChatInput}
       data-gramm={spellCheckChatInput}
       data-gramm_editor={spellCheckChatInput}
